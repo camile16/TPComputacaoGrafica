@@ -1,2 +1,2 @@
 # TPComputacaoGrafica
-1º trabalho prático da disciplina de Computação 
+1º Trabalho Prático da disciplina de Computação Gráfica
