@@ -8,61 +8,61 @@
 #include <algorithm>
 #include <cctype>
 
-static std::string lower(const std::string &s)
+using namespace std;
+
+static string lower(const string &s)
 {
-    std::string out;
+    string out;
     out.reserve(s.size());
     for (char c : s)
-        out.push_back((char)std::tolower((unsigned char)c));
+        out.push_back((char)tolower((unsigned char)c));
     return out;
 }
 
 // (Aula 06: Modelagem de Objetos)- processo de leitura de estrutura de dados (Pontos e Conectividade)
-void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, int step_number, std::vector<Ponto> &pontos, std::vector<Segmento> &segmentos)
+void readVTKFile(const string &base_path, const string &nterm_prefix, int step_number, vector<Ponto> &pontos, vector<Segmento> &segmentos)
 {
     pontos.clear();
     segmentos.clear();
 
-    std::stringstream filename_ss;
+    stringstream filename_ss;
     filename_ss
         << base_path
         << nterm_prefix 
-        << std::setw(4) << std::setfill('0') << step_number
+        << setw(4) << setfill('0') << step_number
         << ".vtk";
 
-    std::string filename = filename_ss.str();
+    string filename = filename_ss.str();
 
-    std::cout << "Carregando arquivo: " << filename << std::endl;
-
-    std::ifstream file(filename);
+    ifstream file(filename);
     if (!file.is_open())
     {
-        std::cerr << "ERRO: Não foi possível abrir: " << filename << std::endl;
+        cerr << "ERRO: Não foi possível abrir: " << filename << endl;
         return;
     }
 
-    std::string line;
+    string line;
     int num_points = 0;
 
-    std::vector<float> radii_cells;
-    std::vector<float> radii_points;
+    vector<float> radii_cells;
+    vector<float> radii_points;
 
-    while (std::getline(file, line))
+    while (getline(file, line))
     {
         if (line.empty())
             continue;
         if (line[0] == '#')
             continue;
 
-        std::stringstream ss(line);
-        std::string keyword;
+        stringstream ss(line);
+        string keyword;
         ss >> keyword;
-        std::string keyl = lower(keyword);
+        string keyl = lower(keyword);
 
         if (keyl == "points")
         {
             ss >> num_points;
-            std::string type;
+            string type;
             ss >> type;
 
             pontos.reserve(num_points);
@@ -72,13 +72,13 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                 float x, y, z;
                 if (!(file >> x >> y >> z))
                 {
-                    std::cerr << "ERRO lendo coordenadas dos pontos!\n";
+                    cerr << "ERRO lendo coordenadas dos pontos!\n";
                     return;
                 }
                 pontos.push_back({x, y, z});
             }
 
-            std::getline(file, line);
+            getline(file, line);
         }
 
         else if (keyl == "lines")
@@ -93,7 +93,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                 int count;
                 file >> count;
 
-                std::vector<int> idx(count);
+                vector<int> idx(count);
                 for (int k = 0; k < count; k++)
                     file >> idx[k];
 
@@ -101,7 +101,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                     segmentos.push_back({idx[k], idx[k + 1], 0.0f});
             }
 
-            std::getline(file, line);
+            getline(file, line);
         }
 
         else if (keyl == "cell_data" || keyl == "point_data")
@@ -109,24 +109,24 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
             int count;
             ss >> count;
 
-            std::streampos savedPos = file.tellg();
-            std::string next;
+            streampos savedPos = file.tellg();
+            string next;
 
-            while (std::getline(file, next))
+            while (getline(file, next))
             {
                 if (next.empty())
                     continue;
 
-                std::stringstream ss2(next);
-                std::string kw;
+                stringstream ss2(next);
+                string kw;
                 ss2 >> kw;
 
                 if (lower(kw) == "scalars")
                 {
-                    std::string arrayName, type;
+                    string arrayName, type;
                     ss2 >> arrayName >> type;
 
-                    std::getline(file, next); 
+                    getline(file, next); 
 
                     if (lower(keyword) == "cell_data")
                     {
@@ -137,7 +137,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                             file >> r;
                             radii_cells.push_back(r);
                         }
-                        std::getline(file, next);
+                        getline(file, next);
                         break;
                     }
                     else
@@ -149,7 +149,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                             file >> r;
                             radii_points.push_back(r);
                         }
-                        std::getline(file, next);
+                        getline(file, next);
                         break;
                     }
                 }
@@ -187,15 +187,15 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
 
         for (auto &p : pontos)
         {
-            minX = std::min(minX, p.x);
-            maxX = std::max(maxX, p.x);
-            minY = std::min(minY, p.y);
-            maxY = std::max(maxY, p.y);
+            minX = min(minX, p.x);
+            maxX = max(maxX, p.x);
+            minY = min(minY, p.y);
+            maxY = max(maxY, p.y);
         }
 
         float rangeX = maxX - minX;
         float rangeY = maxY - minY;
-        float scale = std::max(rangeX, rangeY);
+        float scale = max(rangeX, rangeY);
         float halfRange = scale * 0.5f;
 
         float midX = (maxX + minX) * 0.5f;
@@ -209,7 +209,4 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
             p.y = (p.y - midY) / halfRange;
         }
     }
-
-    std::cout << "Leitura OK. Pontos: " << pontos.size()
-              << " Segmentos: " << segmentos.size() << std::endl;
 }
