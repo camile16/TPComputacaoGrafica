@@ -26,27 +26,25 @@ static std::string g_basePath =
     "./TP_CCO_Pacote_Dados/TP1_2D/Nterm_064/";
 static std::string g_ntermPrefix = "tree2D_Nterm0064_step";
 
-// -------------------------------
-// NOVO: modo de cor fixa
-// -------------------------------
-bool g_useFixedColor = false;                            // false = colormap, true = cor fixa
-float g_fixedR = 0.0f, g_fixedG = 0.7f, g_fixedB = 0.0f; // verde
-// -------------------------------
+// define cor fixa
+bool g_useFixedColor = false;                           
+float g_fixedR = 0.0f, g_fixedG = 0.7f, g_fixedB = 0.0f; 
+
 
 void init()
 {
 
-    // (Aula 07: Teoria das Cores) - Define a cor de fundo usando o modelo RGB (1,1,1 = Branco)
+    // (Aula 07: Teoria das Cores) - define a cor de fundo usando o modelo RGB (1,1,1 = Branco)
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-    // (Aula 05: Atributos de Primitivas) - Define a largura da linha como um atributo de estado
+    // (Aula 05: Atributos de Primitivas) - define a largura da linha como um atributo de estado
     glLineWidth(2.0f);
 }
 
 void getColorFromValue(float v, float &r, float &g, float &b)
 {
-    // (Aula 07: Teoria das Cores) - Implementação de um Colormap (Pseudo-coloração)
-    // Mapeia valores escalares para componentes R, G, B para facilitar a visualização
+    // (Aula 07: Teoria das Cores) - implementação de um Colormap (Pseudo-coloração)
+    // mapeia valores escalares para componentes R, G, B para facilitar a visualização
     float mn = g_minRaio;
     float mx = g_maxRaio;
     float t = 0.0f;
