@@ -23,7 +23,7 @@ float g_minRaio = 0.0f;
 float g_maxRaio = 1.0f;
 
 static std::string g_basePath =
-    "C:/Users/Marcus/Programacao/CompGrafica/TPComputacaoGrafica/TP_CCO_Pacote_Dados/TP1_2D/Nterm_064/";
+    "./TP_CCO_Pacote_Dados/TP1_2D/Nterm_064/";
 static std::string g_ntermPrefix = "tree2D_Nterm0064_step";
 
 // -------------------------------
@@ -151,19 +151,19 @@ void setResolutionPreset(int nterm)
 
     if (nterm == 64)
     {
-        g_basePath = "C:/Users/Marcus/Programacao/CompGrafica/TPComputacaoGrafica/TP_CCO_Pacote_Dados/TP1_2D/Nterm_064/";
+        g_basePath = "./TP_CCO_Pacote_Dados/TP1_2D/Nterm_064/";
         g_ntermPrefix = "tree2D_Nterm0064_step";
         g_validSteps = {8, 16, 24, 32, 40, 48, 56, 64};
     }
     else if (nterm == 128)
     {
-        g_basePath = "C:/Users/Marcus/Programacao/CompGrafica/TPComputacaoGrafica/TP_CCO_Pacote_Dados/TP1_2D/Nterm_128/";
+        g_basePath = "./TP_CCO_Pacote_Dados/TP1_2D/Nterm_128/";
         g_ntermPrefix = "tree2D_Nterm0128_step";
         g_validSteps = {16, 32, 48, 64, 80, 96, 112, 128};
     }
     else if (nterm == 256)
     {
-        g_basePath = "C:/Users/Marcus/Programacao/CompGrafica/TPComputacaoGrafica/TP_CCO_Pacote_Dados/TP1_2D/Nterm_256/";
+        g_basePath = "./TP_CCO_Pacote_Dados/TP1_2D/Nterm_256/";
         g_ntermPrefix = "tree2D_Nterm0256_step";
         g_validSteps = {32, 64, 96, 128, 160, 192, 224, 256};
     }
