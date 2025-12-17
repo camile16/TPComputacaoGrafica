@@ -8,10 +8,6 @@
 #include <algorithm>
 #include <cctype>
 
-// ===============================
-// REMOVIDO: O caminho base agora é passado como parâmetro
-// ===============================
-
 static std::string lower(const std::string &s)
 {
     std::string out;
@@ -21,17 +17,16 @@ static std::string lower(const std::string &s)
     return out;
 }
 
-// A função agora recebe base_path e nterm_prefix
+// (Aula 06: Modelagem de Objetos)- processo de leitura de estrutura de dados (Pontos e Conectividade)
 void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, int step_number, std::vector<Ponto> &pontos, std::vector<Segmento> &segmentos)
 {
     pontos.clear();
     segmentos.clear();
 
-    // monta o nome completo do arquivo usando os parâmetros
     std::stringstream filename_ss;
     filename_ss
         << base_path
-        << nterm_prefix // Agora é dinâmico
+        << nterm_prefix 
         << std::setw(4) << std::setfill('0') << step_number
         << ".vtk";
 
@@ -64,9 +59,6 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
         ss >> keyword;
         std::string keyl = lower(keyword);
 
-        // ================
-        // LENDO POINTS
-        // ================
         if (keyl == "points")
         {
             ss >> num_points;
@@ -86,12 +78,9 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                 pontos.push_back({x, y, z});
             }
 
-            std::getline(file, line); // limpeza
+            std::getline(file, line);
         }
 
-        // ================
-        // LENDO LINES
-        // ================
         else if (keyl == "lines")
         {
             int numLines, totalValues;
@@ -108,7 +97,6 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                 for (int k = 0; k < count; k++)
                     file >> idx[k];
 
-                // decompor
                 for (int k = 0; k < count - 1; k++)
                     segmentos.push_back({idx[k], idx[k + 1], 0.0f});
             }
@@ -116,9 +104,6 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
             std::getline(file, line);
         }
 
-        // ======================
-        // CELL_DATA ou POINT_DATA
-        // ======================
         else if (keyl == "cell_data" || keyl == "point_data")
         {
             int count;
@@ -141,7 +126,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
                     std::string arrayName, type;
                     ss2 >> arrayName >> type;
 
-                    std::getline(file, next); // LOOKUP_TABLE
+                    std::getline(file, next); 
 
                     if (lower(keyword) == "cell_data")
                     {
@@ -176,7 +161,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
 
     file.close();
 
-    // Atribui os raios
+    // atribui os raios
     if (!radii_cells.empty())
     {
         for (size_t i = 0; i < radii_cells.size() && i < segmentos.size(); i++)
@@ -192,7 +177,7 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
         }
     }
 
-    // Normalização dos pontos para [-1,1]
+    // normalizacao dos pontos para [-1,1]
     if (!pontos.empty())
     {
         float minX = pontos[0].x;
@@ -216,6 +201,8 @@ void readVTKFile(const std::string &base_path, const std::string &nterm_prefix, 
         float midX = (maxX + minX) * 0.5f;
         float midY = (maxY + minY) * 0.5f;
 
+        // (Aula 08: Operações e Posições) - normalização de coordenadas
+        // transforma as coordenadas originais do arquivo para o intervalo [-1, 1]
         for (auto &p : pontos)
         {
             p.x = (p.x - midX) / halfRange;

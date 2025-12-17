@@ -35,12 +35,18 @@ float g_fixedR = 0.0f, g_fixedG = 0.7f, g_fixedB = 0.0f; // verde
 
 void init()
 {
+
+    // (Aula 07: Teoria das Cores) - Define a cor de fundo usando o modelo RGB (1,1,1 = Branco)
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // (Aula 05: Atributos de Primitivas) - Define a largura da linha como um atributo de estado
     glLineWidth(2.0f);
 }
 
 void getColorFromValue(float v, float &r, float &g, float &b)
 {
+    // (Aula 07: Teoria das Cores) - Implementação de um Colormap (Pseudo-coloração)
+    // Mapeia valores escalares para componentes R, G, B para facilitar a visualização
     float mn = g_minRaio;
     float mx = g_maxRaio;
     float t = 0.0f;
@@ -86,12 +92,14 @@ void getColorFromValue(float v, float &r, float &g, float &b)
 
 void drawSegmentAsQuad(const Ponto &a, const Ponto &b, float halfWidth)
 {
+    // (Aula 05: Primitivas Gráficas) - o codigo gera manualmente um quadrilátero para dar espessura ao vaso
     float dx = b.x - a.x;
     float dy = b.y - a.y;
     float len = std::sqrt(dx * dx + dy * dy);
     if (len < 1e-6f)
         return;
 
+    // (Aula 08: Operações Geométricas)- calculo de Vetor Normal para determinar a espessura
     float nx = -dy / len;
     float ny = dx / len;
 
@@ -103,6 +111,7 @@ void drawSegmentAsQuad(const Ponto &a, const Ponto &b, float halfWidth)
     float v3x = b.x - ox, v3y = b.y - oy;
     float v4x = a.x - ox, v4y = a.y - oy;
 
+    // (Aula 05: Primitivas) - GL_TRIANGLES é a primitiva básica de preenchimento
     glBegin(GL_TRIANGLES);
     glVertex2f(v1x, v1y);
     glVertex2f(v2x, v2y);
@@ -182,18 +191,20 @@ void setResolutionPreset(int nterm)
 
 void display()
 {
+    // (Aula 09: Projeções) - cria uma Projeção Ortográfica, define o volume de visualização onde os objetos serão mapeados para a tela
     glClear(GL_COLOR_BUFFER_BIT);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(-1.5, 1.5, -1.5, 1.5, -1.0, 1.0);
 
+    // (Aula 07: Transformações Geométricas) - uso da Pilha de Matrizes e Transformações 2D
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glTranslatef(g_transX, g_transY, 0.0f);
-    glRotatef(g_rotAngulo, 0.0f, 0.0f, 1.0f);
-    glScalef(g_escala, g_escala, 1.0f);
+    glTranslatef(g_transX, g_transY, 0.0f); // translação
+    glRotatef(g_rotAngulo, 0.0f, 0.0f, 1.0f); // rotação em torno do eixo Z
+    glScalef(g_escala, g_escala, 1.0f); // escala Uniforme
 
     const float shadowOffsetX = 0.005f;
     const float shadowOffsetY = -0.005f;
@@ -211,15 +222,15 @@ void display()
             halfWidth = 0.0008f;
 
         // sombra
+        // (Aula 07: Transformações) - glPushMatrix/popMatrix para isolar a transformação da sombra
         glPushMatrix();
         glTranslatef(shadowOffsetX, shadowOffsetY, 0.0f);
-        glColor3f(shadowColorR, shadowColorG, shadowColorB);
+        glColor3f(shadowColorR, shadowColorG, shadowColorB); // atributo de Cor
         drawSegmentAsQuad(pa, pb, halfWidth);
         glPopMatrix();
 
-        // ----------------------------
-        // COR PRINCIPAL (FIXA OU COLORMAP)
-        // ----------------------------
+        // cor fixa
+        // (Aula 07: Teoria das Cores) - aplicação da cor RGB
         if (g_useFixedColor)
         {
             glColor3f(g_fixedR, g_fixedG, g_fixedB);
@@ -230,16 +241,16 @@ void display()
             getColorFromValue(s.raio, rr, gg, bb);
             glColor3f(rr, gg, bb);
         }
-        // ----------------------------
 
         drawSegmentAsQuad(pa, pb, halfWidth);
     }
 
-    glutSwapBuffers();
+    glutSwapBuffers(); // (Aula 03: Fundamentos) - double buffering para evitar flickering
 }
 
 void reshape(int w, int h)
 {
+    // (Aula 03: Fundamentos) - ajuste do Viewport 
     glViewport(0, 0, w, h);
 }
 
@@ -262,7 +273,7 @@ void keyboard(unsigned char key, int x, int y)
         loadTree();
         break;
 
-    case '+':
+    case '+': // shift +
         if (g_stepIndex + 1 < g_validSteps.size())
         {
             g_stepIndex++;
@@ -271,7 +282,7 @@ void keyboard(unsigned char key, int x, int y)
         }
         break;
 
-    case '-':
+    case '-': // -
         if (g_stepIndex > 0)
         {
             g_stepIndex--;
@@ -319,9 +330,7 @@ void keyboard(unsigned char key, int x, int y)
         std::cout << "globalRadiusScale = " << g_globalRadiusScale << std::endl;
         break;
 
-    // ----------------------------
-    // NOVO: alternar entre cor fixa e colormap
-    // ----------------------------
+    // alterna entre cor fixa e cor default
     case 'c':
     case 'C':
         g_useFixedColor = true;
@@ -333,7 +342,6 @@ void keyboard(unsigned char key, int x, int y)
         g_useFixedColor = false;
         std::cout << "Modo: COLORMAP\n";
         break;
-        // ----------------------------
 
     case 'r':
         g_transX = g_transY = 0.0f;
