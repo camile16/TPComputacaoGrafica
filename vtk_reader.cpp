@@ -10,6 +10,7 @@
 
 using namespace std;
 
+// helper para converter string para minusculas
 static string lower(const string &s)
 {
     string out;
@@ -22,9 +23,11 @@ static string lower(const string &s)
 // (Aula 06: Modelagem de Objetos)- processo de leitura de estrutura de dados (Pontos e Conectividade)
 void readVTKFile(const string &base_path, const string &nterm_prefix, int step_number, vector<Ponto> &pontos, vector<Segmento> &segmentos)
 {
+    // Limpa dados antigos antes de carregar novos
     pontos.clear();
     segmentos.clear();
 
+    // constroi o caminho completo dos arquivos lidos
     stringstream filename_ss;
     filename_ss
         << base_path
@@ -44,9 +47,10 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
     string line;
     int num_points = 0;
 
-    vector<float> radii_cells;
-    vector<float> radii_points;
+    vector<float> radii_cells; // raios por segmento
+    vector<float> radii_points; // raios por ponto
 
+    // loop de leitura linha por linha
     while (getline(file, line))
     {
         if (line.empty())
@@ -59,6 +63,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
         ss >> keyword;
         string keyl = lower(keyword);
 
+        // bloco deleitura de vertices (points)
         if (keyl == "points")
         {
             ss >> num_points;
@@ -80,7 +85,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
 
             getline(file, line);
         }
-
+        // bloco de leitura de conectividade (lines)
         else if (keyl == "lines")
         {
             int numLines, totalValues;
@@ -97,6 +102,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
                 for (int k = 0; k < count; k++)
                     file >> idx[k];
 
+                // cria segmentos conectando pontos sequencialmente    
                 for (int k = 0; k < count - 1; k++)
                     segmentos.push_back({idx[k], idx[k + 1], 0.0f});
             }
@@ -104,6 +110,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
             getline(file, line);
         }
 
+        // bloco de dados escalares (raios)
         else if (keyl == "cell_data" || keyl == "point_data")
         {
             int count;
@@ -112,6 +119,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
             streampos savedPos = file.tellg();
             string next;
 
+            // procura pela palavra "SCALARS" dentro do bloco de dados
             while (getline(file, next))
             {
                 if (next.empty())
@@ -151,6 +159,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
                         }
                         getline(file, next);
                         break;
+                        // sai do loop interno apos ler os escalares
                     }
                 }
 
@@ -164,9 +173,11 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
     // atribui os raios
     if (!radii_cells.empty())
     {
+        // Se o raio e por célula, mapeia direto 1:1
         for (size_t i = 0; i < radii_cells.size() && i < segmentos.size(); i++)
             segmentos[i].raio = radii_cells[i];
     }
+    // Se o raio e por ponto, o raio do segmento e a média dos raios dos seus vertices
     else if (!radii_points.empty())
     {
         for (auto &s : segmentos)
@@ -177,6 +188,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
         }
     }
 
+    // isso garante que a arvore sempre caiba na tela, independente da unidade original 
     // normalizacao dos pontos para [-1,1]
     if (!pontos.empty())
     {
@@ -185,6 +197,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
         float minY = pontos[0].y;
         float maxY = pontos[0].y;
 
+        // encontra Bounding Box
         for (auto &p : pontos)
         {
             minX = min(minX, p.x);
@@ -195,7 +208,7 @@ void readVTKFile(const string &base_path, const string &nterm_prefix, int step_n
 
         float rangeX = maxX - minX;
         float rangeY = maxY - minY;
-        float scale = max(rangeX, rangeY);
+        float scale = max(rangeX, rangeY); // usa o maior eixo para manter a proporção (aspect ratio) 
         float halfRange = scale * 0.5f;
 
         float midX = (maxX + minX) * 0.5f;

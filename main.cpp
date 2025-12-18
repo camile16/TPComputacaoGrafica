@@ -8,30 +8,34 @@
 
 using namespace std;
 
+// variaveis globais de dados
 vector<Ponto> g_pontos;
 vector<Segmento> g_segmentos;
 
+// variaveis de controle de camera/transformacao
 float g_transX = 0.0f;
 float g_transY = 0.0f;
 float g_rotAngulo = 0.0f;
 float g_escala = 1.0f;
 
+// controle de passos da simulacao
 int g_current_step = 64;
 vector<int> g_validSteps;
 int g_stepIndex = 0;
 
+// controle visual dos vasos 
 float g_globalRadiusScale = 0.05f;
 float g_minRaio = 0.0f;
 float g_maxRaio = 1.0f;
 
+// caminhos de arquivos
 static string g_basePath =
     "./TP_CCO_Pacote_Dados/TP1_2D/Nterm_064/";
 static string g_ntermPrefix = "tree2D_Nterm0064_step";
 
-// define cor fixa
+// controle de cor
 bool g_useFixedColor = false;                           
 float g_fixedR = 0.0f, g_fixedG = 0.7f, g_fixedB = 0.0f; 
-
 
 void init()
 {
@@ -42,6 +46,8 @@ void init()
     glLineWidth(2.0f);
 }
 
+// implementa o "mapa de calor"
+// converte um valor escalar 'v' (raio) em uma cor RGB
 void getColorFromValue(float v, float &r, float &g, float &b)
 {
     // (Aula 07: Teoria das Cores) - implementação de um Colormap (Pseudo-coloração)
@@ -49,47 +55,50 @@ void getColorFromValue(float v, float &r, float &g, float &b)
     float mn = g_minRaio;
     float mx = g_maxRaio;
     float t = 0.0f;
+    // normaliza 'v' entre 0.0 e 1.0
     if (mx > mn)
         t = (v - mn) / (mx - mn);
     t = max(0.0f, std::min(1.0f, t));
 
-    if (t <= 0.125f)
+    // interpolacao por partes para criar o gradiente
+    if (t <= 0.125f) // azul escuro -> azul
     {
         r = 0.0f;
         g = 0.0f;
         b = 0.5f + (t / 0.125f) * 0.5f;
     }
-    else if (t <= 0.375f)
+    else if (t <= 0.375f) // azul -> ciano
     {
         float tt = (t - 0.125f) / 0.25f;
         r = 0.0f;
         g = tt;
         b = 1.0f;
     }
-    else if (t <= 0.625f)
+    else if (t <= 0.625f) // ciano -> verde -> amarelo
     {
         float tt = (t - 0.375f) / 0.25f;
         r = tt;
         g = 1.0f;
         b = 1.0f - tt;
     }
-    else if (t <= 0.875f)
+    else if (t <= 0.875f) //amarelo -> laranja
     {
-        float tt = (t - 0.625f) / 0.25f;
+        float tt = (t - 0.625f) / 0.25f; 
         r = 1.0f;
         g = 1.0f - 0.5f * tt;
         b = 0.0f;
     }
     else
     {
-        float tt = (t - 0.875f) / 0.125f;
+        float tt = (t - 0.875f) / 0.125f; //laranja -> vermelho
         r = 1.0f;
         g = 0.5f - 0.5f * tt;
         b = 0.0f;
     }
 }
 
-void drawSegmentAsQuad(const Ponto &a, const Ponto &b, float halfWidth)
+// desenha um segmento como um retangulo
+void drawSegmentQuad(const Ponto &a, const Ponto &b, float halfWidth)
 {
     // (Aula 05: Primitivas Gráficas) - o codigo gera manualmente um quadrilátero para dar espessura ao vaso
     float dx = b.x - a.x;
@@ -98,13 +107,16 @@ void drawSegmentAsQuad(const Ponto &a, const Ponto &b, float halfWidth)
     if (len < 1e-6f)
         return;
 
+    // vetor normalizado perpendicular a linha (para "engrossar" o vaso)
     // (Aula 08: Operações Geométricas)- calculo de Vetor Normal para determinar a espessura
     float nx = -dy / len;
     float ny = dx / len;
 
+    // deslocamento (offset) baseado na espessura
     float ox = nx * halfWidth;
     float oy = ny * halfWidth;
 
+    // Os 4 vertices do retangulo ao redor da linha central
     float v1x = a.x + ox, v1y = a.y + oy;
     float v2x = b.x + ox, v2y = b.y + oy;
     float v3x = b.x - ox, v3y = b.y - oy;
@@ -122,6 +134,7 @@ void drawSegmentAsQuad(const Ponto &a, const Ponto &b, float halfWidth)
     glEnd();
 }
 
+// calcula o menor e maior raio da arvore atual para normalizar as cores
 void updateRadiusRange()
 {
     if (g_segmentos.empty())
@@ -137,6 +150,7 @@ void updateRadiusRange()
         g_minRaio = min(g_minRaio, s.raio);
         g_maxRaio = max(g_maxRaio, s.raio);
     }
+    // evita divisao por zero se todos os raios forem iguais
     if (abs(g_maxRaio - g_minRaio) < 1e-6f)
     {
         float eps = max(1e-3f, 0.1f * abs(g_minRaio));
@@ -152,6 +166,7 @@ void loadTree()
     updateRadiusRange();
 }
 
+// configura os caminhos e passos validos baseados na tecla pressionada (1, 2, 3)
 void setResolutionPreset(int nterm)
 {
     g_validSteps.clear();
@@ -176,6 +191,7 @@ void setResolutionPreset(int nterm)
         g_validSteps = {32, 64, 96, 128, 160, 192, 224, 256};
     }
 
+    // tenta manter o step atual se ele existir na nova resolucao
     if (!g_validSteps.empty())
     {
         auto it = std::find(g_validSteps.begin(), g_validSteps.end(), g_current_step);
@@ -193,18 +209,22 @@ void display()
     // (Aula 09: Projeções) - cria uma Projeção Ortográfica, define o volume de visualização onde os objetos serão mapeados para a tela
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // configuracao da projecao (Camera)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
+    // define area visivel de -1.5 a 1.5
     glOrtho(-1.5, 1.5, -1.5, 1.5, -1.0, 1.0);
 
     // (Aula 07: Transformações Geométricas) - uso da Pilha de Matrizes e Transformações 2D
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    // aplica transformacoes globais na ordem inversa da pilha: Translate -> Rotate -> Scale
     glTranslatef(g_transX, g_transY, 0.0f); // translação
     glRotatef(g_rotAngulo, 0.0f, 0.0f, 1.0f); // rotação em torno do eixo Z
     glScalef(g_escala, g_escala, 1.0f); // escala Uniforme
 
+    // constantes para a sombra (simples deslocamento)
     const float shadowOffsetX = 0.005f;
     const float shadowOffsetY = -0.005f;
     const float shadowColorR = 0.2f;
@@ -216,16 +236,17 @@ void display()
         const Ponto &pa = g_pontos[s.p1_index];
         const Ponto &pb = g_pontos[s.p2_index];
 
+        // define a largura visual baseada no raio fisico * escala de visualização
         float halfWidth = s.raio * g_globalRadiusScale;
         if (halfWidth < 0.0008f)
             halfWidth = 0.0008f;
 
-        // sombra
+        // desenha sombra (offset + cor escura)
         // (Aula 07: Transformações) - glPushMatrix/popMatrix para isolar a transformação da sombra
         glPushMatrix();
         glTranslatef(shadowOffsetX, shadowOffsetY, 0.0f);
         glColor3f(shadowColorR, shadowColorG, shadowColorB); // atributo de Cor
-        drawSegmentAsQuad(pa, pb, halfWidth);
+        drawSegmentQuad(pa, pb, halfWidth);
         glPopMatrix();
 
         // cor fixa
@@ -241,7 +262,7 @@ void display()
             glColor3f(rr, gg, bb);
         }
 
-        drawSegmentAsQuad(pa, pb, halfWidth);
+        drawSegmentQuad(pa, pb, halfWidth);
     }
 
     glutSwapBuffers(); // (Aula 03: Fundamentos) - double buffering para evitar flickering
@@ -250,6 +271,7 @@ void display()
 void reshape(int w, int h)
 {
     // (Aula 03: Fundamentos) - ajuste do Viewport 
+    // ajusta area de desenho ao redimensionar janela
     glViewport(0, 0, w, h);
 }
 
@@ -257,6 +279,7 @@ void keyboard(unsigned char key, int x, int y)
 {
     switch (key)
     {
+    // Selecao de resolucoes (Arquivos diferentes)
     case '1':
         setResolutionPreset(64);
         loadTree();
@@ -272,6 +295,7 @@ void keyboard(unsigned char key, int x, int y)
         loadTree();
         break;
 
+    // passos da simulacao
     case '+': // shift +
         if (g_stepIndex + 1 < g_validSteps.size())
         {
@@ -338,6 +362,7 @@ void keyboard(unsigned char key, int x, int y)
         g_useFixedColor = false;
         break;
 
+     // resetar visualizacao
     case 'r':
         g_transX = g_transY = 0.0f;
         g_rotAngulo = 0.0f;
@@ -346,18 +371,18 @@ void keyboard(unsigned char key, int x, int y)
 
     case 27:
         exit(0);
-        break;
+        break; // ESC para sair
     }
 
-    glutPostRedisplay();
+    glutPostRedisplay(); // solicita atualizacao da tela
 }
 
 int main(int argc, char **argv)
 {
-    setResolutionPreset(64);
+    setResolutionPreset(64); // inicia com a menor resolucao
 
     glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB); // buffer duplo evita flickering
     glutInitWindowSize(800, 800);
     glutCreateWindow("TP1 - Visualizacao 2D Arterial - Colorido");
 

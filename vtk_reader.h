@@ -7,6 +7,7 @@
 
 using namespace std;
 
+// funcao principal de leitura
 void readVTKFile(const string &base_path, const string &nterm_prefix, int step, vector<Ponto> &pontos, vector<Segmento> &segmentos);
 
 #endif // VTK_READER_H
